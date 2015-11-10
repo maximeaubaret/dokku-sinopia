@@ -2,23 +2,116 @@
 set -eo pipefail; [[ $DOKU_TRACE ]] && set -x
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 
-case "$1" in
-  hello)
-    [[ -z $2 ]] && dokku_log_fail "Please specify an app to run the command on"
-    APP="$2"; IMAGE_TAG=$(get_running_image_tag $APP); IMAGE=$(get_app_image_name $APP $IMAGE_TAG)
-    verify_app_name "$APP"
+SINOPIA_IMAGE=$(docker images | grep maximeaubaret/sinopia | awk '{print $1}')
+SINOPIA_CONTAINER=$(docker ps -a | grep sinopia-registry | awk '{print $1}')
+SINOPIA_CONTAINER_RUNNING=$(docker ps | grep sinopia-registry | awk '{print $1}')
 
-    echo "Hello $APP"
+build_sinopia_image() {
+  echo
+  echo "-----> Sinopia image not found. Building..."
+
+  docker build -q=true -t maximeaubaret/sinopia github.com/maximeaubaret/dokku-sinopia-docker.git > /dev/null
+
+  echo "       Image built as maximeaubaret/sinopia"
+  echo
+}
+
+start_sinopia_container() {
+
+  # The container is already running
+  if [[ ! -z $SINOPIA_CONTAINER_RUNNING ]]; then
+
+    echo
+    echo "       Sinopia container is already runining"
+    echo
+
+  else
+
+    echo
+    echo "-----> Starting Sinopia container..."
+
+    SINOPIA_CONTAINER=$(docker run -d -p 4873:4873 --name sinopia-registry maximeaubaret/sinopia)
+    SINOPIA_CONTAINER_RUNNING=$SINOPIA_CONTAINER
+
+    echo "       Done."
+    echo
+
+  fi
+
+}
+
+stop_sinopia_container() {
+
+  # The container is running
+  if [[ ! -z $SINOPIA_CONTAINER_RUNNING ]]; then
+    echo
+    echo "-----> Stopping Sinopia container..."
+
+    # Stop the container
+    ID=$(docker stop $SINOPIA_CONTAINER_RUNNING)
+    docker wait $ID > /dev/null
+
+    echo "       Done."
+    echo
+
+  # The container is not running
+  else
+    echo
+    echo "       Sinopia Container not running"
+    echo
+  fi
+
+}
+
+case "$1" in
+  sinopia)
+
+    # Build the image if necessary
+    if [[ -z $SINOPIA_IMAGE ]]; then
+      build_sinopia_image
+    fi
+
+    # Start the container if necessary
+    if [[ -z $SINOPIA_CONTAINER ]]; then
+      start_sinopia_container
+    fi
+
+    # Check the status
+    if [[ -z $SINOPIA_CONTAINER_RUNNING ]]; then
+      SINOPIA_STATUS="stopped"
+    else
+      SINOPIA_STATUS="running"
+      SINOPIA_IP=$(docker inspect $SINOPIA_CONTAINER | grep IPAdress | awk '{print $2}' | tr -d ',"')
+    fi
+
+    echo
+    echo "-----> Infos about Sinopia registry:"
+    echo
+    echo "       Status: $SINOPIA_STATUS"
+    echo "       Container: $SINOPIA_CONTAINER"
+
+    if [[ ! -z $SINOPIA_CONTAINER_RUNNING ]]; then
+      echo "       Container IP: $SINOPIA_IP"
+      echo "       Container Port: 4873"
+    fi
+
+    echo
+
     ;;
 
-  hello:world)
-    echo "Hello world"
+  sinopia:start)
+    start_sinopia_container
+    ;;
+
+  sinopia:stop)
+    stop_sinopia_container
     ;;
 
   help)
     cat<<EOF
-    hello <app>, Says "Hello <app>"
-    hello:world, Says "Hello world"
+    sinopia         Get information about the Sinopia container
+    sinopia:start   Start the Sinopia container
+    sinopia:stop    Stop the Sinopia container
 EOF
     ;;
 
