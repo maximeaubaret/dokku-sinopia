@@ -9,7 +9,7 @@ build_sinopia_image() {
   echo
   echo "-----> Sinopia image not found. Building..."
 
-  docker build -q=true -t maximeaubaret/sinopia github.com/maximeaubaret/dokku-sinopia-docker.git > /dev/null
+  docker build -q=true -t maximeaubaret/sinopia github.com/maximeaubaret/dokku-sinopia-docker.git
 
   echo "       Image built as maximeaubaret/sinopia"
   echo
