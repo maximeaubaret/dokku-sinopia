@@ -39,6 +39,21 @@ start_sinopia_container() {
 
 }
 
+restart_sinopia_container() {
+
+    echo
+    echo "-----> Restarting Sinopia container..."
+
+    docker start $SINOPIA_CONTAINER
+    sleep 5
+
+    echo "       Done."
+    echo
+
+    dokku sinopia
+
+}
+
 stop_sinopia_container() {
 
   # The container is running
@@ -102,6 +117,10 @@ case "$1" in
     start_sinopia_container
     ;;
 
+  sinopia:restart)
+    restart_sinopia_container
+    ;;
+
   sinopia:stop)
     stop_sinopia_container
     ;;
@@ -110,6 +129,7 @@ case "$1" in
     cat<<EOF
     sinopia         Get information about the Sinopia container
     sinopia:start   Start the Sinopia container
+    sinopia:restart Restart the Sinopia container
     sinopia:stop    Stop the Sinopia container
 EOF
     ;;
