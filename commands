@@ -15,7 +15,7 @@ case "$1" in
     echo "Hello world"
     ;;
 
-  hello)
+  help)
     cat<<EOF
     hello <app>, Says "Hello <app>"
     hello:world, Says "Hello world"
