@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
-source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 
 SINOPIA_IMAGE=$(docker images | grep maximeaubaret/sinopia | awk '{print $1}')
 SINOPIA_CONTAINER=$(docker ps -a | grep sinopia-registry | awk '{print $1}')
